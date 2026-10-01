@@ -158,6 +158,8 @@ the built-in values.
 | `reminders.sixAmLocalHour` | `6` | The wall-clock anchor hour |
 | `filters.maxEventHours` | `12` | Longer spans fall back to the declared session length |
 | `sources.*.pollIntervalMinutes` | CF/ATC/LC 360, CC 60 | Per-source minimum fetch interval |
+| `notifications.desktop` | `true` | Pop-ups for new contests, auth failure, and provider outage |
+| `notifications.suppressOutageNotifications` | `{}` | e.g. `{ "codechef": true }` to mute outage pop-ups for one provider only |
 
 ---
 
@@ -242,7 +244,7 @@ a transport failure, so the response body has to be inspected even on a 4xx.
 ## Tests
 
 ```bash
-npm run test     # 106 tests
+npm run test     # 139 tests
 npm run typecheck
 ```
 
@@ -278,3 +280,12 @@ inversion, and the decorative-glyph stripping.
 - **LeetCode biweekly and weekly can collide.** Both run on Saturday/Sunday, and in some
   weeks both fall inside the 14-day horizon at once. They are separate events because
   they are separate contests.
+- **LeetCode is fetched from an endpoint its `robots.txt` disallows.** `Disallow: /graphql`
+  is present, so this is a deliberate choice rather than an oversight. The documented
+  REST alternative returns Cloudflare HTTP 403 and does not work. Set
+  `sources.leetcode.enabled` to `false` if you would rather not.
+- **A failed provider pops up on every poll.** The timer wakes hourly, so a source that
+  is down for hours will notify each time rather than once. Use
+  `notifications.suppressOutageNotifications` for that provider to stop the pop-ups
+  without losing alerting for the others. Suppression only silences the pop-up; the
+  failure is still reported by `npm run status`, the log, the journal and the exit code.

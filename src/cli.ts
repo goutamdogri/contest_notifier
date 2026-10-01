@@ -101,6 +101,15 @@ async function cmdStatus(config: Config): Promise<number> {
     console.log(`  taskListName    ${config.taskListName}`);
     console.log(`  reminderMethod  ${config.reminders.method}`);
     console.log(`  anchorHour      ${config.reminders.sixAmLocalHour}:00 ${config.timezone}`);
+    console.log(
+      `  desktopAlerts   ${config.notifications.desktop ? 'on' : 'off'}  ` +
+        `outage muted: ${
+          Object.entries(config.notifications.suppressOutageNotifications ?? {})
+            .filter(([, v]) => v)
+            .map(([k]) => k)
+            .join(', ') || 'none'
+        }`,
+    );
     console.log('');
     console.log('Paths');
     console.log(`  config   ${config.paths.configDir}`);

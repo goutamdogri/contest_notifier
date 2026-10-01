@@ -200,7 +200,8 @@ npx tsx src/cli.ts defaults   # built-in values only, ignoring your file
 | `filters.maxEventHours` | `12` | Longer spans clamp to declared session length |
 | `sources.<p>.enabled` | `true` | Per-source on/off |
 | `sources.<p>.pollIntervalMinutes` | see 1.2 | Per-source minimum fetch interval |
-| `notifications.desktop` | `true` | `notify-send` on new contests |
+| `notifications.desktop` | `true` | `notify-send` on new contests, auth failure, and provider outage |
+| `notifications.suppressOutageNotifications.<p>` | unset | Set `true` to mute outage pop-ups for one provider |
 
 ### 2.4 Change the execution frequency
 
@@ -391,14 +392,49 @@ Problems:
 **e) Structured logging.** Every failure is logged with its scope at `error` level to
 `~/.local/state/contest-notifier/notifier.log`.
 
-### 4.2 What is *not* raised as an alert
+**e) Desktop notification on outage.** The moment `fetchAll` reports a failure, a
+pop-up is raised with the provider name and the underlying reason. The retry
+boilerplate is rewritten so the cause leads:
 
-One honest gap: **desktop notifications fire only for auth failure and for newly
-found contests, not for a provider outage.** A broken source will be visible in
-`status`, the exit code, the journal and the log, but you will not get a pop-up while
-working. That was a deliberate choice to avoid a notification every hour during a
-transient blip, given the tool runs unattended. If you would rather be told, the
-place to change it is `src/run.ts` where `notifyDesktop` is called.
+```
+Contest Notifier: CodeChef feed unavailable
+HTTP 503 Service Unavailable  (https://codechef.com/api/list/contests/future)  after 4 attempts
+```
+
+This is a pop-up per *failing* provider, not per run, and only failures produce one.
+A provider that is merely not due yet is silent.
+
+**Muting one provider.** Set the flag for that platform only:
+
+```json
+"notifications": {
+  "desktop": true,
+  "suppressOutageNotifications": { "codechef": true }
+}
+```
+
+Everything else keeps alerting; only that provider goes quiet. Suppression affects
+the pop-up only. The failure is still recorded in `status`, the log, the journal and
+the non-zero exit code, so a muted provider is never silently forgotten:
+
+```
+npm run status        # Problems: shows it regardless of suppression
+journalctl --user -u contest-notifier.service
+```
+
+`npm run status` also prints which providers are currently muted, so you can confirm
+a flag took effect:
+
+```
+desktopAlerts   on  outage muted: codechef
+```
+
+To mute everything, set `notifications.desktop` to `false`.
+
+**On the noise trade-off.** Because the timer wakes hourly, a provider that fails on
+every poll raises a pop-up each hour. That is the intended behaviour for alerting,
+but it is exactly the case the mute flag exists for, which is why the flag is
+per-provider rather than global.
 
 ### 4.3 Retry and backoff
 

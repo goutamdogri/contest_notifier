@@ -2,7 +2,7 @@ import { DateTime } from 'luxon';
 import type { Config } from './config.js';
 import { Store } from './db.js';
 import { log } from './logger.js';
-import { notifyDesktop } from './notify.js';
+import { notifyDesktop, outageNotices } from './notify.js';
 import { filterContests, fetchAll } from './sources/index.js';
 import { contestContentHash, type Contest, type Platform } from './models.js';
 import { authenticate, AuthError, type AuthClients } from './google/auth.js';
@@ -101,6 +101,16 @@ export async function run(config: Config, options: RunOptions = {}): Promise<Run
       const platform = failure.platform;
       if (candidates.includes(platform)) store.setSourceState(platform, 'error', failure.error);
       summary.failures.push({ scope: `source:${platform}`, error: failure.error });
+    }
+
+    // Alert on a provider outage the moment it happens. Gated per provider so a
+    // chronically flaky source can be silenced on its own without losing alerting
+    // for the others. Only failing sources produce a notice; healthy ones are silent.
+    for (const notice of outageNotices(
+      failures,
+      config.notifications.suppressOutageNotifications,
+    )) {
+      notifyDesktop(notice.title, notice.body, config.notifications.desktop);
     }
 
     const upcoming = filterContests(contests, config, now);

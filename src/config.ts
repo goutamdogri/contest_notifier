@@ -1,6 +1,7 @@
 import { readFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
+import type { Platform } from './models.js';
 
 export interface ReminderConfig {
   /** Google Calendar reminder method: "popup" or "email". */
@@ -44,6 +45,8 @@ export interface Config {
   userAgent: string;
   notifications: {
     desktop: boolean;
+    /** Map platform to true to suppress provider-outage desktop notifications. */
+    suppressOutageNotifications?: Partial<Record<Platform, boolean>>;
   };
   paths: {
     configDir: string;
@@ -79,7 +82,10 @@ export const DEFAULT_CONFIG: Omit<Config, 'paths'> = {
     leetcode: { enabled: true, pollIntervalMinutes: 360 },
   },
   userAgent: 'contest-notifier/1.0 (local, single-user)',
-  notifications: { desktop: true },
+  notifications: {
+    desktop: true,
+    suppressOutageNotifications: {},
+  },
 };
 
 function xdgDir(envVar: string, fallback: string): string {
@@ -143,7 +149,10 @@ export function loadConfig(configPath?: string): Config {
     ...fileConfig,
     reminders: { ...DEFAULT_CONFIG.reminders, ...(fileConfig.reminders ?? {}) },
     filters: { ...DEFAULT_CONFIG.filters, ...(fileConfig.filters ?? {}) },
-    notifications: { ...DEFAULT_CONFIG.notifications, ...(fileConfig.notifications ?? {}) },
+    notifications: {
+      ...DEFAULT_CONFIG.notifications,
+      ...(fileConfig.notifications ?? {}),
+    },
     sources: { ...DEFAULT_CONFIG.sources, ...(fileConfig.sources ?? {}) },
     paths,
   };
