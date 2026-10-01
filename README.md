@@ -6,6 +6,9 @@ item).
 
 Runs in the background on your laptop via a systemd user timer.
 
+See **[ARCHITECTURE.md](ARCHITECTURE.md)** for how it works end to end, how to change
+configuration, how to stop/start it, and what happens when a provider fails.
+
 ---
 
 ## What it creates, per contest
