@@ -1,0 +1,27 @@
+[Unit]
+Description=Contest Notifier - sync upcoming coding contests to Google Calendar and Tasks
+Documentation=file:/home/goutamdogri/Projects/fun_project/contest_notifier/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/goutamdogri/Projects/fun_project/contest_notifier
+
+# nvm installs are not on systemd's default PATH, so node is referenced by full path.
+ExecStart=/home/goutamdogri/.nvm/versions/node/v24.13.0/bin/node --disable-warning=ExperimentalWarning /home/goutamdogri/Projects/fun_project/contest_notifier/dist/cli.js run --non-interactive --quiet
+
+# A slow or flaky network should not permanently disable the timer.
+TimeoutStartSec=240
+
+# Reasonable hardening. Left deliberately light so the run cannot fail because of
+# an unexpected write location; the only writes are the token dir and state dir.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=default.target

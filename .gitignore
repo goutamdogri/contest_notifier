@@ -1,0 +1,16 @@
+node_modules/
+dist/
+*.tsbuildinfo
+
+# OAuth client download and any local credentials
+client_secret*.json
+credentials.json
+token.json
+config.json
+
+# local state
+*.log
+*.log.*
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm

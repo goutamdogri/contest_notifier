@@ -1,0 +1,25 @@
+{
+  "timezone": "Asia/Kolkata",
+  "horizonDays": 14,
+  "calendarId": "primary",
+  "calendarColorId": "9",
+  "taskListName": "Contests",
+  "reminders": {
+    "method": "popup",
+    "oneDayBeforeMinutes": 1440,
+    "sixAmLocalHour": 6,
+    "twoHoursBeforeMinutes": 120,
+    "fiveMinutesBeforeMinutes": 5
+  },
+  "filters": {
+    "minLeadMinutes": 5,
+    "maxEventHours": 12
+  },
+  "sources": {
+    "codeforces": { "enabled": true, "pollIntervalMinutes": 360 },
+    "atcoder": { "enabled": true, "pollIntervalMinutes": 360 },
+    "codechef": { "enabled": true, "pollIntervalMinutes": 60 }
+  },
+  "userAgent": "contest-notifier/1.0 (local, single-user)",
+  "notifications": { "desktop": true }
+}

@@ -1,0 +1,19 @@
+[Unit]
+Description=Trigger Contest Notifier hourly
+Documentation=file:/home/goutamdogri/Projects/fun_project/contest_notifier/README.md
+
+[Timer]
+# First run a few minutes after login, then hourly.
+OnBootSec=10min
+OnUnitActiveSec=1h
+
+# Catch up immediately after a laptop that was suspended or powered off.
+Persistent=true
+
+# Spread the load a little so three machines do not all hit the APIs on the hour.
+RandomizedDelaySec=5min
+
+Unit=contest-notifier.service
+
+[Install]
+WantedBy=timers.target
