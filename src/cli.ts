@@ -171,7 +171,9 @@ async function cmdProbeColors(config: Config): Promise<number> {
 async function main(argv: string[]): Promise<number> {
   const args = parseArgs(argv);
   const config = loadConfig(args.configPath);
-  initLogger(config.paths.logFile, args.verbose ? 'debug' : args.quiet ? 'error' : 'info');
+  // Console verbosity follows the flags; the log file always records from info up,
+  // so an unattended --quiet run still leaves an audit trail.
+  initLogger(config.paths.logFile, args.verbose ? 'debug' : args.quiet ? 'error' : 'info', 'info');
 
   switch (args.command) {
     case 'run': {

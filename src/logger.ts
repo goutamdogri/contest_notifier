@@ -8,11 +8,23 @@ const MAX_BYTES = 2 * 1024 * 1024;
 const MAX_ROTATIONS = 3;
 
 let logFile: string | undefined;
-let minLevel: LogLevel = 'info';
+let fileLevel: LogLevel = 'info';
+let consoleLevel: LogLevel = 'info';
 
-export function initLogger(file: string | undefined, level: LogLevel = 'info'): void {
+/**
+ * `fileLevel` and `consoleLevel` are deliberately separate. The systemd service runs
+ * with --quiet so the journal is not spammed every hour, and a single shared level
+ * meant --quiet also silenced the log file, leaving background runs with no
+ * persistent record at all.
+ */
+export function initLogger(
+  file: string | undefined,
+  console: LogLevel = 'info',
+  fileLevelOverride?: LogLevel,
+): void {
   logFile = file;
-  minLevel = level;
+  consoleLevel = console;
+  fileLevel = fileLevelOverride ?? 'info';
   if (file) {
     const dir = dirname(file);
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true, mode: 0o700 });
@@ -41,7 +53,10 @@ function rotateIfNeeded(file: string): void {
 }
 
 function write(level: LogLevel, message: string, fields?: Record<string, unknown>): void {
-  if (LEVEL_ORDER[level] < LEVEL_ORDER[minLevel]) return;
+  const toFile = logFile && LEVEL_ORDER[level] >= LEVEL_ORDER[fileLevel];
+  const toConsole = LEVEL_ORDER[level] >= LEVEL_ORDER[consoleLevel];
+  // A debug line with --quiet and no file is not worth formatting.
+  if (!toFile && !toConsole) return;
 
   const extras = fields
     ? ' ' +
@@ -51,7 +66,7 @@ function write(level: LogLevel, message: string, fields?: Record<string, unknown
     : '';
   const line = `${new Date().toISOString()} ${level.toUpperCase().padEnd(5)} ${message}${extras}\n`;
 
-  if (logFile) {
+  if (toFile && logFile) {
     try {
       rotateIfNeeded(logFile);
       appendFileSync(logFile, line, { mode: 0o600 });
@@ -60,8 +75,10 @@ function write(level: LogLevel, message: string, fields?: Record<string, unknown
     }
   }
 
-  const stream = level === 'error' || level === 'warn' ? process.stderr : process.stdout;
-  stream.write(line);
+  if (toConsole) {
+    const stream = level === 'error' || level === 'warn' ? process.stderr : process.stdout;
+    stream.write(line);
+  }
 }
 
 export const log = {
