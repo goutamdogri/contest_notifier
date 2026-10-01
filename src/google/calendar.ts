@@ -11,6 +11,7 @@ const PLATFORM_LABEL: Record<Contest['platform'], string> = {
   codeforces: 'Codeforces',
   atcoder: 'AtCoder',
   codechef: 'CodeChef',
+  leetcode: 'LeetCode',
 };
 
 /**

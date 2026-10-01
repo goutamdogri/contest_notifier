@@ -40,7 +40,7 @@ export interface Config {
      */
     maxEventHours: number;
   };
-  sources: Record<'codeforces' | 'atcoder' | 'codechef', SourceConfig>;
+  sources: Record<'codeforces' | 'atcoder' | 'codechef' | 'leetcode', SourceConfig>;
   userAgent: string;
   notifications: {
     desktop: boolean;
@@ -76,6 +76,7 @@ export const DEFAULT_CONFIG: Omit<Config, 'paths'> = {
     codeforces: { enabled: true, pollIntervalMinutes: 360 },
     atcoder: { enabled: true, pollIntervalMinutes: 360 },
     codechef: { enabled: true, pollIntervalMinutes: 60 },
+    leetcode: { enabled: true, pollIntervalMinutes: 360 },
   },
   userAgent: 'contest-notifier/1.0 (local, single-user)',
   notifications: { desktop: true },

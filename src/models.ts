@@ -1,9 +1,9 @@
 import { createHash } from 'node:crypto';
 import type { DateTime } from 'luxon';
 
-export type Platform = 'codeforces' | 'atcoder' | 'codechef';
+export type Platform = 'codeforces' | 'atcoder' | 'codechef' | 'leetcode';
 
-export const PLATFORMS: readonly Platform[] = ['codeforces', 'atcoder', 'codechef'];
+export const PLATFORMS: readonly Platform[] = ['codeforces', 'atcoder', 'codechef', 'leetcode'];
 
 export interface Contest {
   platform: Platform;

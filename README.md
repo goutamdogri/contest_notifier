@@ -1,7 +1,8 @@
 # Contest Notifier
 
-Watches Codeforces, AtCoder and CodeChef for upcoming contests and puts each one in
-your Google Calendar (with reminders) and Google Tasks (as a checklist item).
+Watches Codeforces, AtCoder, CodeChef and LeetCode for upcoming contests and puts
+each one in your Google Calendar (with reminders) and Google Tasks (as a checklist
+item).
 
 Runs in the background on your laptop via a systemd user timer.
 
@@ -153,7 +154,7 @@ the built-in values.
 | `reminders.method` | `popup` | `popup` or `email` |
 | `reminders.sixAmLocalHour` | `6` | The wall-clock anchor hour |
 | `filters.maxEventHours` | `12` | Longer spans fall back to the declared session length |
-| `sources.*.pollIntervalMinutes` | CF/ATC 360, CC 60 | Per-source minimum fetch interval |
+| `sources.*.pollIntervalMinutes` | CF/ATC/LC 360, CC 60 | Per-source minimum fetch interval |
 
 ---
 
@@ -176,9 +177,14 @@ never blocks the others. Rows are validated individually so a single unexpected
 contest cannot discard a whole listing.
 
 **Polling is not uniform.** CodeChef only announces contests ~2–4 days ahead, so it
-is polled hourly. Codeforces (~16 days) and AtCoder (~29 days) are polled every 6
-hours, which also avoids re-downloading Codeforces' 410 KB full-history response
+is polled hourly. Codeforces (~16 days), AtCoder (~29 days) and LeetCode (~1 week for
+both the weekly and biweekly series) are polled every 6 hours, which also avoids
+re-downloading Codeforces' 410 KB and LeetCode's 75 KB full-history responses
 pointlessly.
+
+LeetCode contests always start on the hour, so its events can trip the reminder
+collider described under **Known limitations**: a weekly contest at 08:00 local makes
+"that day at 06:00" and "2 hours before" the same instant, so only 3 reminders are set.
 
 ---
 
@@ -211,12 +217,29 @@ is `/api/list/contests/future`. All `page`/`limit` parameters are ignored. Use t
 `end − start` for recurring containers, which is why a 50-hour "Placement Prep
 Weekends" block is clamped to its declared 120-minute session.
 
+**LeetCode** — no public API and no iCal feed, and `/contest/` HTML **403s** generic
+clients, but the internal GraphQL endpoint accepts an unauthenticated POST. Three
+specific traps:
+
+- **Schema introspection is blocked.** `{ __type(name: "ContestNode") }` returns
+  `Query unavailable`, so the schema cannot be discovered programmatically; the field
+  names have to be established by probing and reading the errors.
+- **`upcomingContests` is a trap.** It returns only the single nearest *Weekly*
+  Contest and never the *Biweekly* ones, so using it silently drops half of LeetCode's
+  contests. `allContests` is the field that works, and includes both series.
+- **A POST without `content-type` fails as HTTP 499**, which is LeetCode's edge
+  reporting "client closed request" — the query is never parsed. This looks like a
+  network error rather than a bad request, so it is easy to misdiagnose.
+
+GraphQL also reports unknown fields as **HTTP 400** with an `errors` array rather than
+a transport failure, so the response body has to be inspected even on a 4xx.
+
 ---
 
 ## Tests
 
 ```bash
-npm run test     # 83 tests
+npm run test     # 106 tests
 npm run typecheck
 ```
 
@@ -243,3 +266,12 @@ inversion, and the decorative-glyph stripping.
   catches up on resume, and the Calendar reminders themselves are unaffected.
 - **The Tasks API is not a scheduling API.** If you expected "notify me 24h before" to
   come from the Task, it cannot be done that way; that is what the Calendar event is for.
+- **A contest can get 3 reminders instead of 4** when "that day at 06:00" lands on the
+  same instant as another reminder. LeetCode weekly contests start at 08:00 local, which
+  makes the 06:00 anchor exactly 2 hours before the start, so it collides with
+  "2 hours before". The dedup keeps the earlier one and logs which it dropped, rather
+  than sending the same notification twice. Move `sixAmLocalHour` in your config to
+  avoid it if you would rather keep all four.
+- **LeetCode biweekly and weekly can collide.** Both run on Saturday/Sunday, and in some
+  weeks both fall inside the 14-day horizon at once. They are separate events because
+  they are separate contests.

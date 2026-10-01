@@ -5,6 +5,7 @@ import { log } from '../logger.js';
 import { fetchCodeforces } from './codeforces.js';
 import { fetchAtCoder } from './atcoder.js';
 import { fetchCodeChef } from './codechef.js';
+import { fetchLeetCode } from './leetcode.js';
 
 export interface FetchOutcome {
   contests: Contest[];
@@ -17,6 +18,7 @@ const FETCHERS: Record<Platform, Fetcher> = {
   codeforces: fetchCodeforces,
   atcoder: fetchAtCoder,
   codechef: fetchCodeChef,
+  leetcode: fetchLeetCode,
 };
 
 /**
@@ -61,7 +63,12 @@ export function filterContests(contests: Contest[], config: Config, now: DateTim
 }
 
 export function groupByPlatform(contests: Contest[]): Record<Platform, Contest[]> {
-  const grouped: Record<Platform, Contest[]> = { codeforces: [], atcoder: [], codechef: [] };
+  const grouped: Record<Platform, Contest[]> = {
+    codeforces: [],
+    atcoder: [],
+    codechef: [],
+    leetcode: [],
+  };
   for (const contest of contests) grouped[contest.platform].push(contest);
   return grouped;
 }

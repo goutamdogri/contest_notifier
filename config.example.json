@@ -18,7 +18,8 @@
   "sources": {
     "codeforces": { "enabled": true, "pollIntervalMinutes": 360 },
     "atcoder": { "enabled": true, "pollIntervalMinutes": 360 },
-    "codechef": { "enabled": true, "pollIntervalMinutes": 60 }
+    "codechef": { "enabled": true, "pollIntervalMinutes": 60 },
+    "leetcode": { "enabled": true, "pollIntervalMinutes": 360 }
   },
   "userAgent": "contest-notifier/1.0 (local, single-user)",
   "notifications": { "desktop": true }
